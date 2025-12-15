@@ -2,3 +2,7 @@
 .terraform/
 *.tfstate
 *.tfstate.*
+.terraform.*
+
+git remote add origin https://DaaSWealth-PSS@dev.azure.com/DaaSWealth-PSS/Wealth-Infra/_git/Wealth-Infra
+git push -u origin --all
