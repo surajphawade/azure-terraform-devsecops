@@ -2,22 +2,117 @@ trigger: none
 
 pool: dev-pool
 
+variables:
+  WORK_DIR: '$(System.DefaultWorkingDirectory)/Env-Infra/dev/'
+  SPN: 'DaasWealth'
+
 stages:
-  - stage: 
+  - stage: precheck
+    displayName: Static Analysis Stage
     jobs:
-      - job:
+      - job: Plan
+        displayName: Terraform Plan
         steps:
           - task: TerraformInstaller@1
+            displayName: terraform Install
             inputs:
               terraformVersion: 'latest'
           - task: TerraformTask@5
+            displayName: Terrafrom init
             inputs:
               provider: 'azurerm'
               command: 'init'
-              workingDirectory: '$(System.DefaultWorkingDirectory)/Env-Infra/dev/'
-              backendAzureRmStorageAccountName: 'stg-aacount'
-              backendAzureRmContainerName: 'stg-container'
+              workingDirectory: '$(WORK_DIR)'
+              backendServiceArm: '$(SPN)'
+              backendAzureRmStorageAccountName: 'az3tirestorage01'
+              backendAzureRmContainerName: 'data'
               backendAzureRmKey: 'dev.tfstate'
-          
-          
+          - task: TerraformTask@5
+            displayName: Terraform fmt
+            inputs:
+              provider: 'azurerm'
+              command: 'custom'
+              workingDirectory: '$(WORK_DIR)'
+              outputTo: 'console'
+              customCommand: 'fmt'
+              environmentServiceNameAzureRM: '$(SPN)'
+          - task: TerraformTask@5
+            displayName: Terraform validate
+            inputs:
+              provider: 'azurerm'
+              command: 'custom'
+              workingDirectory: '$(WORK_DIR)'
+              outputTo: 'console'
+              customCommand: 'validate'
+              environmentServiceNameAzureRM: '$(SPN)'            
+
+
+  - stage: Sec
+    displayName: Scan & Analaysis 
+    jobs:
+    - job: 
+      displayName: security & linting
+      steps: 
+        - task: Bash@3
+          displayName: tfsec install & scan
+          inputs:
+            targetType: 'inline'
+            script: |
+              curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash 
+              
+              tfsec .      
+        - task: Bash@3
+          displayName: tflint install & precheck
+          inputs:
+            targetType: 'inline'
+            script: |
+              curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+              
+              tflint --init
+              
+              tflint
+        - task: TerraformTask@5
+          displayName: Terraform Plan
+          inputs:
+            provider: 'azurerm'
+            command: 'plan'
+            workingDirectory: '$(WORK_DIR)'
+            environmentServiceNameAzureRM: '$(SPN)'        
+
+##Manual Validation --Step
+
+  - stage: approval
+    jobs:
+    - job: ManualApproval
+      pool: server
+      steps: 
+      - task: ManualValidation@1
+        inputs:
+          notifyUsers: 'falana@gmail.com'
+
+  - stage: Apply
+    displayName: Apply Stage
+    jobs:
+      - job:
+        displayName: terraform Apply
+        steps:
+          - task: TerraformTask@5
+            displayName: terraform init
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              workingDirectory: '$(WORK_DIR)'
+              backendServiceArm: '$(SPN)'
+              backendAzureRmStorageAccountName: 'az3tirestorage01'
+              backendAzureRmContainerName: 'data'
+              backendAzureRmKey: 'dev.tfstate'
+        
+
+          - task: TerraformTask@5
+            displayName: Terraform Apply
+            inputs:
+              provider: 'azurerm'
+              command: 'apply'
+              workingDirectory: '$(WORK_DIR)'
+              environmentServiceNameAzureRM: '$(SPN)'
           
