@@ -81,6 +81,10 @@ stages:
               tflint --init
               
               tflint
+        - task: TerraformInstaller@1
+          displayName: terraform Install
+          inputs:
+            terraformVersion: 'latest'        
         - task: TerraformTask@5
           displayName: Terraform Plan
           inputs:
