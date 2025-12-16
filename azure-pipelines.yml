@@ -1,7 +1,5 @@
 trigger: none
 
-pool: dev-pool
-
 variables:
   WORK_DIR: '$(System.DefaultWorkingDirectory)/Env-Infra/dev/'
   SPN: 'DaasWealth'
@@ -9,6 +7,7 @@ variables:
 stages:
   - stage: precheck
     displayName: Static Analysis Stage
+    pool: dev-pool
     jobs:
       - job: Plan
         displayName: Terraform Plan
@@ -47,10 +46,11 @@ stages:
               environmentServiceNameAzureRM: '$(SPN)'            
 
 
-  - stage: Sec
+  - stage: SecureScan
     displayName: Scan & Analaysis 
+    pool: dev-pool
     jobs:
-    - job: 
+    - job: SecnLinting
       displayName: security & linting
       steps: 
         - task: Bash@3
@@ -91,9 +91,10 @@ stages:
           notifyUsers: 'falana@gmail.com'
 
   - stage: Apply
+    pool: dev-pool
     displayName: Apply Stage
     jobs:
-      - job:
+      - job: Deploy_Infra
         displayName: terraform Apply
         steps:
           - task: TerraformTask@5
