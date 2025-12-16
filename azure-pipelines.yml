@@ -85,6 +85,16 @@ stages:
           displayName: terraform Install
           inputs:
             terraformVersion: 'latest'        
+        
+        - task: AzureCLI@2
+          displayName: Azure Login (SPN)
+          inputs:
+            azureSubscription: '$(SPN)'
+            scriptType: bash
+            scriptLocation: inlineScript
+            inlineScript: |
+              az account show
+
 
         - task: TerraformTask@5
           displayName: terraform init
