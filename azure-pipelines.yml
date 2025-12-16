@@ -85,20 +85,6 @@ stages:
           displayName: terraform Install
           inputs:
             terraformVersion: 'latest'        
-        
-        - task: Bash@3
-          inputs:
-            targetType: 'inline'
-            script: 'curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash'
-            
-        - task: AzureCLI@2
-          displayName: Azure Login (SPN)
-          inputs:
-            azureSubscription: '$(SPN)'
-            scriptType: bash
-            scriptLocation: inlineScript
-            inlineScript: |
-              az account show
 
 
         - task: TerraformTask@5
@@ -117,10 +103,8 @@ stages:
           displayName: Terraform Plan
           inputs:
             provider: 'azurerm'
-            command: 'custom'
+            command: 'plan'
             workingDirectory: '$(WORK_DIR)'
-            outputTo: 'console'
-            customCommand: 'plan'
             environmentServiceNameAzureRM: '$(SPN)'
 
 ##Manual Validation --Step
