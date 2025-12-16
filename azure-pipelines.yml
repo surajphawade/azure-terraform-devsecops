@@ -81,12 +81,13 @@ stages:
               tflint --init
               
               tflint
-        - task: TerraformInstaller@1
-          displayName: terraform Install
-          inputs:
-            terraformVersion: 'latest'        
+    
 
 
+  - stage:
+    jobs:
+      - job:
+        steps:
         - task: TerraformTask@5
           displayName: terraform init
           inputs:
@@ -106,6 +107,8 @@ stages:
             command: 'plan'
             workingDirectory: '$(WORK_DIR)'
             environmentServiceNameAzureRM: '$(SPN)'
+
+
 
 ##Manual Validation --Step
 
