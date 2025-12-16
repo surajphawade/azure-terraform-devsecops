@@ -1,5 +1,7 @@
 trigger: none
 
+pool: dev-pool
+
 variables:
   WORK_DIR: '$(System.DefaultWorkingDirectory)/Env-Infra/dev/'
   SPN: 'DaasWealth'
@@ -85,7 +87,7 @@ stages:
 
 
   - stage:
-    pool: dev-pool
+
     jobs:
       - job:
         steps:
