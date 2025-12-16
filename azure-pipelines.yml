@@ -85,6 +85,17 @@ stages:
           displayName: terraform Install
           inputs:
             terraformVersion: 'latest'        
+
+        - task: TerraformTask@5
+          displayName: terraform init
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: '$(WORK_DIR)'
+            backendServiceArm: '$(SPN)'
+            backendAzureRmStorageAccountName: 'az3tirestorage01'
+            backendAzureRmContainerName: 'data'
+            backendAzureRmKey: 'dev.tfstate'            
         - task: TerraformTask@5
           displayName: Terraform Plan
           inputs:
@@ -111,23 +122,29 @@ stages:
       - job: Deploy_Infra
         displayName: terraform Apply
         steps:
-          - task: TerraformTask@5
-            displayName: terraform init
-            inputs:
-              provider: 'azurerm'
-              command: 'init'
-              workingDirectory: '$(WORK_DIR)'
-              backendServiceArm: '$(SPN)'
-              backendAzureRmStorageAccountName: 'az3tirestorage01'
-              backendAzureRmContainerName: 'data'
-              backendAzureRmKey: 'dev.tfstate'
+
+        - task: TerraformInstaller@1
+          displayName: terraform Install
+          inputs:
+            terraformVersion: 'latest' 
+
+        - task: TerraformTask@5
+          displayName: terraform init
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: '$(WORK_DIR)'
+            backendServiceArm: '$(SPN)'
+            backendAzureRmStorageAccountName: 'az3tirestorage01'
+            backendAzureRmContainerName: 'data'
+            backendAzureRmKey: 'dev.tfstate'
         
 
-          - task: TerraformTask@5
-            displayName: Terraform Apply
-            inputs:
-              provider: 'azurerm'
-              command: 'apply'
-              workingDirectory: '$(WORK_DIR)'
-              environmentServiceNameAzureRM: '$(SPN)'
+        - task: TerraformTask@5
+          displayName: Terraform Apply
+          inputs:
+            provider: 'azurerm'
+            command: 'apply'
+            workingDirectory: '$(WORK_DIR)'
+            environmentServiceNameAzureRM: '$(SPN)'
           
