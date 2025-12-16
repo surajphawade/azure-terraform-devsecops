@@ -12,6 +12,14 @@ stages:
       - job: Plan
         displayName: Terraform Plan
         steps:
+          - task: Bash@3
+            inputs:
+              targetType: 'inline'
+              script: |
+                sudo apt-get update
+                sudo apt-get install unzip -y
+                
+                unzip -v
           - task: TerraformInstaller@1
             displayName: terraform Install
             inputs:
