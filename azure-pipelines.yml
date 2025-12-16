@@ -85,6 +85,7 @@ stages:
 
 
   - stage:
+    pool: dev-pool
     jobs:
       - job:
         steps:
