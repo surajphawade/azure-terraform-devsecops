@@ -96,13 +96,16 @@ stages:
             backendAzureRmStorageAccountName: 'az3tirestorage01'
             backendAzureRmContainerName: 'data'
             backendAzureRmKey: 'dev.tfstate'            
+            addSpnToEnvironment: true
+            
         - task: TerraformTask@5
           displayName: Terraform Plan
           inputs:
             provider: 'azurerm'
             command: 'plan'
             workingDirectory: '$(WORK_DIR)'
-            environmentServiceNameAzureRM: '$(SPN)'        
+            environmentServiceNameAzureRM: '$(SPN)'     
+            addSpnToEnvironment: true   
 
 ##Manual Validation --Step
 
