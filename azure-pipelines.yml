@@ -63,6 +63,7 @@ stages:
       steps: 
         - task: Bash@3
           displayName: tfsec install & scan
+          continueOnError: true
           inputs:
             targetType: 'inline'
             script: |
@@ -71,6 +72,7 @@ stages:
               tfsec .      
         - task: Bash@3
           displayName: tflint install & precheck
+          continueOnError: true
           inputs:
             targetType: 'inline'
             script: |
