@@ -104,8 +104,7 @@ stages:
             provider: 'azurerm'
             command: 'plan'
             workingDirectory: '$(WORK_DIR)'
-            environmentServiceNameAzureRM: '$(SPN)'     
-            addSpnToEnvironment: true   
+            environmentServiceNameAzureRM: 'DaasWealth'
 
 ##Manual Validation --Step
 
