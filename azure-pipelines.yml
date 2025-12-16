@@ -89,7 +89,8 @@ stages:
     displayName: Terraform Plan
     pool: dev-pool
     steps: 
-    - task: TerraformTask@5
+
+    - task: TerraformTaskV4@4
       inputs:
         provider: 'azurerm'
         command: 'init'
@@ -125,21 +126,23 @@ stages:
     displayName: Terraform Apply
     pool: dev-pool
     steps:
-    - task: TerraformTask@5
+    - task: TerraformTaskV4@4
       inputs:
         provider: 'azurerm'
         command: 'init'
         workingDirectory: '$(WORK_DIR)'
-        backendServiceArm: '$(SPN)'
+        backendServiceArm: 'DaasWealth'
+        backendAzureRmResourceGroupName: 'az-3-tire-rg'
         backendAzureRmStorageAccountName: 'devopsinsidersstate'
         backendAzureRmContainerName: 'tfstate'
         backendAzureRmKey: 'dev.tfstate'  
-    - task: TerraformTask@5
+
+    - task: TerraformTaskV4@4
       inputs:
         provider: 'azurerm'
         command: 'apply'
         workingDirectory: '$(WORK_DIR)'
-        environmentServiceNameAzureRM: '$(SPN)'
+        environmentServiceNameAzureRM: 'DaasWealth'
 
 
 
@@ -309,4 +312,4 @@ stages:
 #             command: 'apply'
 #             workingDirectory: '$(WORK_DIR)'
 #             environmentServiceNameAzureRM: '$(SPN)'
-          
+
