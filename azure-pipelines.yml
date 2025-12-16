@@ -90,7 +90,7 @@ stages:
     pool: dev-pool
     steps: 
 
-    - task: TerraformTaskV4@4
+    - task: TerraformTask@5
       inputs:
         provider: 'azurerm'
         command: 'init'
