@@ -61,44 +61,44 @@ stages:
     - job: SecnLinting
       displayName: security & linting
       steps: 
-        # - task: Bash@3
-        #   displayName: tfsec install & scan
-        #   continueOnError: true
-        #   inputs:
-        #     targetType: 'inline'
-        #     script: |
-        #       curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash 
+        - task: Bash@3
+          displayName: tfsec install & scan
+          continueOnError: true
+          inputs:
+            targetType: 'inline'
+            script: |
+              curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash 
               
-        #       tfsec .      
-        # - task: Bash@3
-        #   displayName: tflint install & precheck
-        #   continueOnError: true
-        #   inputs:
-        #     targetType: 'inline'
-        #     script: |
-        #       curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+              tfsec .      
+        - task: Bash@3
+          displayName: tflint install & precheck
+          continueOnError: true
+          inputs:
+            targetType: 'inline'
+            script: |
+              curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
               
-        #       tflint --init
+              tflint --init
               
-        #       tflint
-        # - task: TerraformInstaller@1
-        #   displayName: terraform Install
-        #   inputs:
-        #     terraformVersion: 'latest'        
+              tflint
+        - task: TerraformInstaller@1
+          displayName: terraform Install
+          inputs:
+            terraformVersion: 'latest'        
         
-        # - task: Bash@3
-        #   inputs:
-        #     targetType: 'inline'
-        #     script: 'curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash'
+        - task: Bash@3
+          inputs:
+            targetType: 'inline'
+            script: 'curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash'
             
-        # - task: AzureCLI@2
-        #   displayName: Azure Login (SPN)
-        #   inputs:
-        #     azureSubscription: '$(SPN)'
-        #     scriptType: bash
-        #     scriptLocation: inlineScript
-        #     inlineScript: |
-        #       az account show
+        - task: AzureCLI@2
+          displayName: Azure Login (SPN)
+          inputs:
+            azureSubscription: '$(SPN)'
+            scriptType: bash
+            scriptLocation: inlineScript
+            inlineScript: |
+              az account show
 
 
         - task: TerraformTask@5
