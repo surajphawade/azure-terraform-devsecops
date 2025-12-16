@@ -8,10 +8,11 @@ variables:
 
 
 
+
 stages:
 - stage: PreCommit
   displayName: Pre-Commit / Static Analysis Stage
-  pool: Default
+  pool: dev-pool
   jobs: 
   - job: TerraformValidate
     displayName: Terraform Validate
@@ -86,7 +87,7 @@ stages:
   jobs: 
   - job: TerraformPlan
     displayName: Terraform Plan
-    pool: Default
+    pool: dev-pool
     steps: 
     - task: TerraformTask@5
       inputs:
@@ -122,7 +123,7 @@ stages:
   jobs:
   - job: TerraformApply
     displayName: Terraform Apply
-    pool: Default
+    pool: dev-pool
     steps:
     - task: TerraformTask@5
       inputs:
