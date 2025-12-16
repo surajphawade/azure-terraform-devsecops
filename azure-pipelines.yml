@@ -120,7 +120,7 @@ stages:
             command: 'custom'
             workingDirectory: '$(WORK_DIR)'
             outputTo: 'console'
-            customCommand: 'terraform plan'
+            customCommand: 'plan'
             environmentServiceNameAzureRM: '$(SPN)'
 
 ##Manual Validation --Step
