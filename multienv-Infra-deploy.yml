@@ -1,17 +1,17 @@
 trigger: none
 
-pool: ${{ parameters.Env }}-pool
-
-variables:
-  WORK_DIR: '$(System.DefaultWorkingDirectory)/Env-Infra/${{ parameters.Env }}/'
-  SPN: 'DaasWealth'
-
 parameters:
 - name: Env
   type: string
   values:
     - dev
     - prod
+
+variables:
+  WORK_DIR: '$(System.DefaultWorkingDirectory)/Env-Infra/${{ parameters.Env }}/'
+  SPN: 'DaasWealth'
+
+
 
 stages:
   - stage: precheck
