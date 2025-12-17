@@ -1,6 +1,6 @@
 trigger: none
 
-pool: dev-pool
+pool: ${{ parameters.Env }}-pool
 
 variables:
   WORK_DIR: '$(System.DefaultWorkingDirectory)/Env-Infra/${{ parameters.Env }}/'
@@ -16,7 +16,7 @@ parameters:
 stages:
   - stage: precheck
     displayName: Static Analysis Stage
-    pool: dev-pool
+    pool: ${{ parameters.Env }}-pool
     jobs:
       - job: Plan
         displayName: Terraform Plan
@@ -65,7 +65,7 @@ stages:
 
   - stage: SecureScan
     displayName: Scan & Analaysis 
-    pool: dev-pool
+    pool: ${{ parameters.Env }}-pool
     jobs:
     - job: SecnLinting
       displayName: security & linting
@@ -130,7 +130,7 @@ stages:
           notifyUsers: 'falana@gmail.com'
 
   - stage: Apply
-    pool: dev-pool
+    pool: ${{ parameters.Env }}-pool
     displayName: Apply Stage
     jobs:
       - job: Deploy_Infra
