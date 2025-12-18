@@ -94,7 +94,7 @@ stages:
               tflint --init
               tflint
 
-    - job: SecnLinting
+    - job: TerraPlan
       displayName: Terraform Plan Generation
       steps: 
         - task: TerraformTask@5
