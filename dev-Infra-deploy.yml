@@ -1,4 +1,6 @@
-trigger: none
+trigger: 
+  - main
+  - feature/*
 
 pool: dev-pool
 
@@ -34,7 +36,7 @@ stages:
               command: 'init'
               workingDirectory: '$(WORK_DIR)'
               backendServiceArm: '$(SPN)'
-              backendAzureRmStorageAccountName: 'az3tirestorage01'
+              backendAzureRmStorageAccountName: '$(BACKEND-STORAGE)'
               backendAzureRmContainerName: 'data'
               backendAzureRmKey: 'dev.tfstate'
           - task: TerraformTask@5
