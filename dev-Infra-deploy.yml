@@ -99,11 +99,6 @@ stages:
           script: |
             tflint --init
 
-      - task: TerraformInstaller@1
-        displayName: Terraform | Install CLI
-        inputs:
-          terraformVersion: 'latest'
-
       - task: TerraformTask@5
         displayName: Terraform | Init (For Plan)
         inputs:
