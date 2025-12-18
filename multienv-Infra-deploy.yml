@@ -108,3 +108,49 @@ stages:
             backendAzureRmContainerName: 'data'
             backendAzureRmKey: 'dev.tfstate'            
             addSpnToEnvironment:
+
+  - stage: approval
+    displayName: APPROVAL | Manual Validation Gate
+    jobs:
+    - job: ManualApproval
+      displayName: Production Change Approval
+      pool: server
+      steps:
+      - task: ManualValidation@1
+        displayName: Await Manual Approval
+        inputs:
+          notifyUsers: 'falana@gmail.com'
+
+
+  - stage: Apply
+    displayName: DEPLOY | Terraform Apply
+    pool: ${{ parameters.Env }}-pool
+    jobs:
+    - job: Deploy_Infra
+      displayName: Infrastructure Deployment
+      steps:
+
+      - task: TerraformInstaller@1
+        displayName: Terraform | Install CLI
+        inputs:
+          terraformVersion: 'latest'
+
+      - task: TerraformTask@5
+        displayName: Terraform | Init (Apply)
+        inputs:
+          provider: 'azurerm'
+          command: 'init'
+          workingDirectory: '$(WORK_DIR)'
+          backendServiceArm: '$(SPN)'
+          backendAzureRmStorageAccountName: 'az3tirestorage01'
+          backendAzureRmContainerName: 'data'
+          backendAzureRmKey: 'dev.tfstate'
+
+      - task: TerraformTask@5
+        displayName: Terraform | Apply Infrastructure
+        inputs:
+          provider: 'azurerm'
+          command: 'apply'
+          workingDirectory: '$(WORK_DIR)'
+          environmentServiceNameAzureRM: '$(SPN)'
+
