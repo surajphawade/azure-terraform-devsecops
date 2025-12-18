@@ -8,165 +8,103 @@ parameters:
     - prod
 
 variables:
+  WORK_DIR: '$(System.DefaultWorkingDirectory)/Env-Infra/${{ parameters.Env }}/'
   SPN: 'DaasWealth'
 
 stages:
+  - stage: precheck
+    displayName: PRECHECK | Terraform Quality & Validation
+    pool: ${{ parameters.Env }}-pool
+    jobs:
+      - job: Plan
+        displayName: Terraform Pre-Validation
+        steps:
+          - task: Bash@3
+            displayName: System Prep | Install OS Packages
+            inputs:
+              targetType: 'inline'
+              script: |
+                sudo apt-get update
+                sudo apt-get install unzip -y
+                unzip -v
+
+          - task: TerraformInstaller@1
+            displayName: Terraform | Install CLI
+            inputs:
+              terraformVersion: 'latest'
+
+          - task: TerraformTask@5
+            displayName: Terraform | Init Backend
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              workingDirectory: '$(WORK_DIR)'
+              backendServiceArm: '$(SPN)'
+              backendAzureRmStorageAccountName: 'az3tirestorage01'
+              backendAzureRmContainerName: 'data'
+              backendAzureRmKey: 'dev.tfstate'
+
+          - task: TerraformTask@5
+            displayName: Terraform | Format Check
+            inputs:
+              provider: 'azurerm'
+              command: 'custom'
+              workingDirectory: '$(WORK_DIR)'
+              outputTo: 'console'
+              customCommand: 'fmt'
+              environmentServiceNameAzureRM: '$(SPN)'
+
+          - task: TerraformTask@5
+            displayName: Terraform | Validate Configuration
+            inputs:
+              provider: 'azurerm'
+              command: 'custom'
+              workingDirectory: '$(WORK_DIR)'
+              outputTo: 'console'
+              customCommand: 'validate'
+              environmentServiceNameAzureRM: '$(SPN)'            
 
 
-- stage: precheck
-  displayName: PRECHECK | Terraform Quality & Validation (${{ parameters.Env }})
-  pool: ${{ parameters.Env }}-pool
-  variables:
-    WORK_DIR: '$(System.DefaultWorkingDirectory)/Env-Infra/${{ parameters.Env }}/'
-  jobs:
-  - job: TerraformPrecheck
-    displayName: Terraform Pre-Validation
-    steps:
+  - stage: SecureScan
+    displayName: SECURITY | Static Analysis & Linting
+    pool: ${{ parameters.Env }}-pool
+    jobs:
+    - job: SecnLinting
+      displayName: Security Scan | tfsec
+      steps: 
+        - task: Bash@3
+          displayName: tfsec | Install & Scan IaC
+          continueOnError: true
+          inputs:
+            targetType: 'inline'
+            script: |
+              curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash 
+              tfsec .      
 
-    - task: Bash@3
-      displayName: System Prep | Install OS Dependencies
-      inputs:
-        targetType: inline
-        script: |
-          sudo apt-get update
-          sudo apt-get install unzip -y
+    - job: SecnLinting
+      displayName: Code Quality | TFLint
+      steps:               
+        - task: Bash@3
+          displayName: TFLint | Install, Init & Lint
+          continueOnError: true
+          inputs:
+            targetType: 'inline'
+            script: |
+              curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+              tflint --init
+              tflint
 
-    - task: TerraformInstaller@1
-      displayName: Terraform | Install CLI
-      inputs:
-        terraformVersion: latest
-
-    - task: TerraformTask@5
-      displayName: Terraform | Init Remote Backend
-      inputs:
-        provider: azurerm
-        command: init
-        workingDirectory: $(WORK_DIR)
-        backendServiceArm: $(SPN)
-        backendAzureRmStorageAccountName: az3tirestorage01
-        backendAzureRmContainerName: data
-        backendAzureRmKey: '${{ parameters.Env }}.tfstate'
-
-    - task: TerraformTask@5
-      displayName: Terraform | Format Check
-      inputs:
-        provider: azurerm
-        command: custom
-        customCommand: fmt
-        workingDirectory: $(WORK_DIR)
-        environmentServiceNameAzureRM: $(SPN)
-
-    - task: TerraformTask@5
-      displayName: Terraform | Validate Configuration
-      inputs:
-        provider: azurerm
-        command: custom
-        customCommand: validate
-        workingDirectory: $(WORK_DIR)
-        environmentServiceNameAzureRM: $(SPN)
-
-
-- stage: SecureScan
-  displayName: SECURITY | Static Analysis & Linting (${{ parameters.Env }})
-  pool: ${{ parameters.Env }}-pool
-  variables:
-    WORK_DIR: '$(System.DefaultWorkingDirectory)/Env-Infra/${{ parameters.Env }}/'
-  jobs:
-
-  - job: TfsecScan
-    displayName: Security Scan | tfsec
-    steps:
-    - task: Bash@3
-      displayName: tfsec | Install & Scan
-      continueOnError: true
-      inputs:
-        targetType: inline
-        script: |
-          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
-          tfsec $(WORK_DIR)
-
-  - job: TFLintScan
-    displayName: Code Quality | TFLint
-    steps:
-    - task: Bash@3
-      displayName: TFLint | Install, Init & Lint
-      continueOnError: true
-      inputs:
-        targetType: inline
-        script: |
-          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
-          tflint --init
-          tflint $(WORK_DIR)
-
-  - job: TerraformPlan
-    displayName: Terraform | Generate Plan
-    steps:
-    - task: TerraformTask@5
-      displayName: Terraform | Init (Plan)
-      inputs:
-        provider: azurerm
-        command: init
-        workingDirectory: $(WORK_DIR)
-        backendServiceArm: $(SPN)
-        backendAzureRmStorageAccountName: az3tirestorage01
-        backendAzureRmContainerName: data
-        backendAzureRmKey: '${{ parameters.Env }}.tfstate'
-        addSpnToEnvironment: true
-
-    - task: TerraformTask@5
-      displayName: Terraform | Plan
-      inputs:
-        provider: azurerm
-        command: plan
-        workingDirectory: $(WORK_DIR)
-        environmentServiceNameAzureRM: $(SPN)
-        addSpnToEnvironment: true
-
-
-- stage: approval
-  displayName: APPROVAL | Manual Gate (PROD)
-  condition: eq('${{ parameters.Env }}', 'prod')
-  jobs:
-  - job: ManualApproval
-    displayName: Production Approval
-    pool: server
-    steps:
-    - task: ManualValidation@1
-      displayName: Await Manual Approval
-      inputs:
-        notifyUsers: 'falana@gmail.com'
-
-
-- stage: Apply
-  displayName: DEPLOY | Terraform Apply (${{ parameters.Env }})
-  pool: ${{ parameters.Env }}-pool
-  variables:
-    WORK_DIR: '$(System.DefaultWorkingDirectory)/Env-Infra/${{ parameters.Env }}/'
-  jobs:
-  - job: DeployInfra
-    displayName: Infrastructure Deployment
-    steps:
-
-    - task: TerraformInstaller@1
-      displayName: Terraform | Install CLI
-      inputs:
-        terraformVersion: latest
-
-    - task: TerraformTask@5
-      displayName: Terraform | Init (Apply)
-      inputs:
-        provider: azurerm
-        command: init
-        workingDirectory: $(WORK_DIR)
-        backendServiceArm: $(SPN)
-        backendAzureRmStorageAccountName: az3tirestorage01
-        backendAzureRmContainerName: data
-        backendAzureRmKey: '${{ parameters.Env }}.tfstate'
-
-    - task: TerraformTask@5
-      displayName: Terraform | Apply
-      inputs:
-        provider: azurerm
-        command: apply
-        workingDirectory: $(WORK_DIR)
-        environmentServiceNameAzureRM: $(SPN)
+    - job: SecnLinting
+      displayName: Terraform Plan Generation
+      steps: 
+        - task: TerraformTask@5
+          displayName: Terraform | Init for Plan
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: '$(WORK_DIR)'
+            backendServiceArm: '$(SPN)'
+            backendAzureRmStorageAccountName: 'az3tirestorage01'
+            backendAzureRmContainerName: 'data'
+            backendAzureRmKey: 'dev.tfstate'            
+            addSpnToEnvironment:
