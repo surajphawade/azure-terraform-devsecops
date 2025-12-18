@@ -8,138 +8,154 @@ variables:
   WORK_DIR: '$(System.DefaultWorkingDirectory)/Env-Infra/dev/'
   SPN: 'DaasWealth'
 
-
 stages:
-  - stage: precheck
-    displayName: Static Analysis Stage
-    pool: dev-pool
-    jobs:
-      - job: Plan
-        displayName: Terraform Plan
-        steps:
-          - task: Bash@3
-            inputs:
-              targetType: 'inline'
-              script: |
-                sudo apt-get update
-                sudo apt-get install unzip -y
-                
-                unzip -v
-          - task: TerraformInstaller@1
-            displayName: terraform Install
-            inputs:
-              terraformVersion: 'latest'
-          - task: TerraformTask@5
-            displayName: Terrafrom init
-            inputs:
-              provider: 'azurerm'
-              command: 'init'
-              workingDirectory: '$(WORK_DIR)'
-              backendServiceArm: '$(SPN)'
-              backendAzureRmStorageAccountName: '$(BACKEND-STORAGE)'
-              backendAzureRmContainerName: 'data'
-              backendAzureRmKey: 'dev.tfstate'
-          - task: TerraformTask@5
-            displayName: Terraform fmt
-            inputs:
-              provider: 'azurerm'
-              command: 'custom'
-              workingDirectory: '$(WORK_DIR)'
-              outputTo: 'console'
-              customCommand: 'fmt'
-              environmentServiceNameAzureRM: '$(SPN)'
-          - task: TerraformTask@5
-            displayName: Terraform validate
-            inputs:
-              provider: 'azurerm'
-              command: 'custom'
-              workingDirectory: '$(WORK_DIR)'
-              outputTo: 'console'
-              customCommand: 'validate'
-              environmentServiceNameAzureRM: '$(SPN)'            
+- stage: precheck
+  displayName: PRECHECK | Terraform Quality & Validation
+  pool: dev-pool
+  jobs:
+    - job: Plan
+      displayName: Terraform Pre-Validation
+      steps:
 
-
-  - stage: SecureScan
-    displayName: Scan & Analaysis 
-    pool: dev-pool
-    jobs:
-    - job: SecnLinting
-      displayName: security & linting
-      steps: 
         - task: Bash@3
-          displayName: tfsec install & scan
-          continueOnError: true
+          displayName: System Prep | Install OS Dependencies
           inputs:
             targetType: 'inline'
             script: |
-              curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash 
-              
-              tfsec .      
-        - task: Bash@3
-          displayName: tflint install & precheck
-          continueOnError: true
-          inputs:
-            targetType: 'inline'
-            script: |
-              curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
-              
-              tflint --init
-              
-              tflint
+              sudo apt-get update
+              sudo apt-get install unzip -y
+              unzip -v
 
         - task: TerraformInstaller@1
-          displayName: terraform Install
+          displayName: Terraform | Install CLI
           inputs:
             terraformVersion: 'latest'
+
         - task: TerraformTask@5
-          displayName: terraform init
+          displayName: Terraform | Init (Remote Backend)
           inputs:
             provider: 'azurerm'
             command: 'init'
             workingDirectory: '$(WORK_DIR)'
             backendServiceArm: '$(SPN)'
-            backendAzureRmStorageAccountName: 'az3tirestorage01'
+            backendAzureRmStorageAccountName: '$(BACKEND-STORAGE)'
             backendAzureRmContainerName: 'data'
-            backendAzureRmKey: 'dev.tfstate'            
-            addSpnToEnvironment: true
-            
+            backendAzureRmKey: 'dev.tfstate'
+
         - task: TerraformTask@5
-          displayName: Terraform Plan
+          displayName: Terraform | Format Check
           inputs:
             provider: 'azurerm'
-            command: 'plan'
+            command: 'custom'
             workingDirectory: '$(WORK_DIR)'
+            outputTo: 'console'
+            customCommand: 'fmt'
             environmentServiceNameAzureRM: '$(SPN)'
-            addSpnToEnvironment: true
+
+        - task: TerraformTask@5
+          displayName: Terraform | Validate Configuration
+          inputs:
+            provider: 'azurerm'
+            command: 'custom'
+            workingDirectory: '$(WORK_DIR)'
+            outputTo: 'console'
+            customCommand: 'validate'
+            environmentServiceNameAzureRM: '$(SPN)'
+
+
+- stage: SecureScan
+  displayName: SECURITY | Static Analysis & Linting
+  pool: dev-pool
+  jobs:
+
+  - job: SecurityAnalaysis
+    displayName: Security Scan | tfsec
+    steps:
+      - task: Bash@3
+        displayName: tfsec | Install & Scan IaC
+        continueOnError: true
+        inputs:
+          targetType: 'inline'
+          script: |
+            curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+            tfsec .
+
+  - job: CodeScanningLinting
+    displayName: Code Quality | TFLint
+    steps:
+
+      - task: Bash@3
+        displayName: TFLint | Install CLI
+        continueOnError: true
+        inputs:
+          targetType: 'inline'
+          script: |
+            curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+
+      - task: Bash@3
+        displayName: TFLint | Initialize Rules
+        inputs:
+          targetType: 'inline'
+          script: |
+            tflint --init
+
+      - task: TerraformInstaller@1
+        displayName: Terraform | Install CLI
+        inputs:
+          terraformVersion: 'latest'
+
+      - task: TerraformTask@5
+        displayName: Terraform | Init (For Plan)
+        inputs:
+          provider: 'azurerm'
+          command: 'init'
+          workingDirectory: '$(WORK_DIR)'
+          backendServiceArm: '$(SPN)'
+          backendAzureRmStorageAccountName: 'az3tirestorage01'
+          backendAzureRmContainerName: 'data'
+          backendAzureRmKey: 'dev.tfstate'
+          addSpnToEnvironment: true
+
+      - task: TerraformTask@5
+        displayName: Terraform | Generate Execution Plan
+        inputs:
+          provider: 'azurerm'
+          command: 'plan'
+          workingDirectory: '$(WORK_DIR)'
+          environmentServiceNameAzureRM: '$(SPN)'
+          addSpnToEnvironment: true
 
 
 
 ##Manual Validation --Step
 
-  - stage: approval
-    jobs:
-    - job: ManualApproval
-      pool: server
-      steps: 
-      - task: ManualValidation@1
-        inputs:
-          notifyUsers: 'falana@gmail.com'
+- stage: approval
+  displayName: APPROVAL | Manual Validation Gate
+  jobs:
+  - job: ManualApproval
+    displayName: Change Approval
+    pool: server
+    steps:
+    - task: ManualValidation@1
+      displayName: Await Manual Approval
+      inputs:
+        notifyUsers: 'falana@gmail.com'
 
-  - stage: Apply
-    pool: dev-pool
-    displayName: Apply Stage
-    jobs:
-      - job: Deploy_Infra
-        displayName: terraform Apply
-        steps:
+- stage: Apply
+  displayName: DEPLOY | Terraform Apply
+  pool: dev-pool
+  jobs:
+    - job: Deploy_Infra
+      displayName: Infrastructure Deployment
+      steps:
 
         - task: TerraformInstaller@1
-          displayName: terraform Install
+          displayName: Terraform | Install CLI
           inputs:
-            terraformVersion: 'latest' 
+            terraformVersion: 'latest'
 
         - task: TerraformTask@5
-          displayName: terraform init
+          displayName: Terraform | Init (Apply Stage)
           inputs:
             provider: 'azurerm'
             command: 'init'
@@ -148,10 +164,9 @@ stages:
             backendAzureRmStorageAccountName: 'az3tirestorage01'
             backendAzureRmContainerName: 'data'
             backendAzureRmKey: 'dev.tfstate'
-        
 
         - task: TerraformTask@5
-          displayName: Terraform Apply
+          displayName: Terraform | Apply Infrastructure
           inputs:
             provider: 'azurerm'
             command: 'apply'
