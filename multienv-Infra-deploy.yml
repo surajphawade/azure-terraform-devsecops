@@ -81,7 +81,7 @@ stages:
               curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash 
               tfsec .      
 
-    - job: SecnLinting
+    - job: CodeLinting
       displayName: Code Quality | TFLint
       steps:               
         - task: Bash@3
