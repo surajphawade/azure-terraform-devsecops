@@ -130,7 +130,7 @@ stages:
 
     - script: |
         go mod tidy
-        go test ./test -v
+        go test 
       displayName: Run Terratest
       workingDirectory: '$(System.DefaultWorkingDirectory)/Env-Infra/terratest/test'
 
