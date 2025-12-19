@@ -98,7 +98,19 @@ stages:
           targetType: 'inline'
           script: |
             tflint --init
-
+- stage: 
+  jobs:
+    - job: 
+      steps:
+      - task: GoTool@0
+        inputs:
+          version: '1.10'
+      - task: Bash@3
+        inputs:
+          targetType: 'inline'
+          script: 'go test'
+          workingDirectory: '$(WORK_DIR)/Env-Infra/terratest/'
+      
       - task: TerraformTask@5
         displayName: Terraform | Init (For Plan)
         inputs:
@@ -109,7 +121,7 @@ stages:
           backendAzureRmStorageAccountName: 'az3tirestorage01'
           backendAzureRmContainerName: 'data'
           backendAzureRmKey: 'dev.tfstate'
-          addSpnToEnvironment: true
+          
 
       - task: TerraformTask@5
         displayName: Terraform | Generate Execution Plan
@@ -118,7 +130,7 @@ stages:
           command: 'plan'
           workingDirectory: '$(WORK_DIR)'
           environmentServiceNameAzureRM: '$(SPN)'
-          addSpnToEnvironment: true
+          
 
 
 
