@@ -100,47 +100,40 @@ stages:
             tflint --init
 
 - stage: TerraformTest
+  displayName: Terratest | Infra Validation
   jobs:
-    - job: Terratesting
-      displayName: TerraTest| Test Terracode Reliability
-      steps:
-      - task: GoTool@0
-        displayName: Install | Go
-        inputs:
-          version: '1.10'
-      - task: Bash@3
-        displayName: TerraTest | go test
-        inputs:
-          targetType: 'inline'
-          script: |
-            go get github.com/gruntwork-io/terratest/modules/terraform
-            
-            go get github.com/gruntwork-io/terratest@latest
-            
-            go mod tidy
-            
-            go test
-          workingDirectory: '$(System.DefaultWorkingDirectory)/Env-Infra/terratest/test/'
-      
-      - task: TerraformTask@5
-        displayName: Terraform | Init (For Plan)
-        inputs:
-          provider: 'azurerm'
-          command: 'init'
-          workingDirectory: '$(WORK_DIR)'
-          backendServiceArm: '$(SPN)'
-          backendAzureRmStorageAccountName: 'az3tirestorage01'
-          backendAzureRmContainerName: 'data'
-          backendAzureRmKey: 'dev.tfstate'
-          
+  - job: Terratesting
+    displayName: Run Terratest
+    pool: dev-pool
 
-      - task: TerraformTask@5
-        displayName: Terraform | Generate Execution Plan
-        inputs:
-          provider: 'azurerm'
-          command: 'plan'
-          workingDirectory: '$(WORK_DIR)'
-          environmentServiceNameAzureRM: '$(SPN)'
+    steps:
+    - checkout: self
+
+    - task: GoTool@0
+      displayName: Install Go
+      inputs:
+        version: '1.23'
+
+    - task: TerraformInstaller@1
+      displayName: Install Terraform
+      inputs:
+        terraformVersion: 'latest'
+
+    - task: AzureCLI@2
+      displayName: Azure Login
+      inputs:
+        azureSubscription: '$(SPN)'
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          az account show
+
+    - script: |
+        go mod tidy
+        go test ./test -v
+      displayName: Run Terratest
+      workingDirectory: '$(System.DefaultWorkingDirectory)/Env-Infra/terratest'
+
           
 
 
