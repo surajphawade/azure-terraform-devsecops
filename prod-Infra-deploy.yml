@@ -113,6 +113,40 @@ stages:
           addSpnToEnvironment: true
 
 
+- stage: TerraformTest
+  displayName: Terratest | Infra Validation
+  jobs:
+  - job: Terratesting
+    displayName: Run Terratest
+    pool: prod-pool
+
+    steps:
+    - checkout: self
+
+    - task: GoTool@0
+      displayName: Install Go
+      inputs:
+        version: '1.23'
+
+    - task: TerraformInstaller@1
+      displayName: Install Terraform
+      inputs:
+        terraformVersion: 'latest'
+
+    - task: AzureCLI@2
+      displayName: Azure Login
+      inputs:
+        azureSubscription: '$(SPN)'
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          az account show
+
+    - script: |
+        go mod tidy
+        go test 
+      displayName: Run Terratest
+      workingDirectory: '$(System.DefaultWorkingDirectory)/Env-Infra/terratest/test'
 
 ##Manual Validation --Step
 
