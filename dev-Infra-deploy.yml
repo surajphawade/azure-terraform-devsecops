@@ -98,7 +98,7 @@ stages:
           targetType: 'inline'
           script: |
             tflint --init
-            
+
 - stage: TerraformTest
   jobs:
     - job: Terratesting
@@ -112,7 +112,10 @@ stages:
         displayName: TerraTest | go test
         inputs:
           targetType: 'inline'
-          script: 'go test'
+          script: |
+            go get github.com/gruntwork-io/terratest/modules/terraform
+            
+            go test
           workingDirectory: '$(System.DefaultWorkingDirectory)/Env-Infra/terratest/test/'
       
       - task: TerraformTask@5
