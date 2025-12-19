@@ -28,6 +28,40 @@ module "azurerm_subnet" {
   rg_name          = each.value.rg_name
 }
 
+module "azurerm_public_ip" {
+  depends_on = [module.azurerm_resource_group]
+  for_each   = var.public_ip
+  source     = "../module/azurerm_public_ip"
+
+  name     = each.value.name
+  rg_name  = each.value.rg_name
+  location = each.value.location
+}
+
+module "azurerm_bastion" {
+  depends_on = [ module.azurerm_public_ip, module.azurerm_subnet ]
+  for_each = var.bastion
+  source   = "../module/azurerm_bastion"
+
+  name         = each.value.name
+  rg_name      = each.value.rg_name
+  location     = each.value.location
+  subnet_id    = module.azurerm_subnet[each.value.subnet_key].subnet_id
+  public_ip_id = module.azurerm_public_ip[each.value.pip_key].public_ip_id
+}
+
+module "azurerm_virtual_machine" {
+  depends_on = [module.azurerm_subnet]
+  for_each   = var.virtual_machine
+  source     = "../module/azurerm_virtual_machine"
+
+  vm_name        = each.value.vm_name
+  rg_name        = each.value.rg_name
+  location       = each.value.location
+  subnet_id      = module.azurerm_subnet[each.value.subnet_key].subnet_id
+  admin_username = each.value.admin_username
+  admin_password = each.value.admin_password
+}
 module "azurerm_storage_account" {
   depends_on = [module.azurerm_resource_group]
   for_each   = var.storage_account
@@ -45,19 +79,6 @@ module "azurerm_storage_container" {
 
   name            = each.value.name
   storage_account = each.value.storage_account
-}
-
-module "azurerm_virtual_machine" {
-  depends_on = [module.azurerm_subnet]
-  for_each   = var.virtual_machine
-  source     = "../module/azurerm_virtual_machine"
-
-  vm_name        = each.value.vm_name
-  rg_name        = each.value.rg_name
-  location       = each.value.location
-  subnet_id      = module.azurerm_subnet[each.value.subnet_key].subnet_id
-  admin_username = each.value.admin_username
-  admin_password = each.value.admin_password
 }
 
 module "azurerm_sql_server" {
@@ -79,31 +100,6 @@ module "azurerm_sql_database" {
 
   db_name     = each.value.db_name
   server_name = module.azurerm_sql_server[each.value.server_key].server_id
-}
-
-module "azurerm_public_ip" {
-  depends_on = [module.azurerm_resource_group]
-  for_each   = var.public_ip
-  source     = "../module/azurerm_public_ip"
-
-  name     = each.value.name
-  rg_name  = each.value.rg_name
-  location = each.value.location
-}
-
-module "azurerm_bastion" {
-  depends_on = [
-    module.azurerm_public_ip,
-    module.azurerm_subnet
-  ]
-  for_each = var.bastion
-  source   = "../module/azurerm_bastion"
-
-  name         = each.value.name
-  rg_name      = each.value.rg_name
-  location     = each.value.location
-  subnet_id    = module.azurerm_subnet[each.value.subnet_key].subnet_id
-  public_ip_id = module.azurerm_public_ip[each.value.pip_key].public_ip_id
 }
 
 module "azurerm_key_vault" {
