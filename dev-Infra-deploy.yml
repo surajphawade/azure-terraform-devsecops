@@ -98,18 +98,22 @@ stages:
           targetType: 'inline'
           script: |
             tflint --init
-- stage: 
+            
+- stage: TerraformTest
   jobs:
-    - job: 
+    - job: Terratesting
+      displayName: TerraTest| Test Terracode Reliability
       steps:
       - task: GoTool@0
+        displayName: Install | Go
         inputs:
           version: '1.10'
       - task: Bash@3
+        displayName: TerraTest | go test
         inputs:
           targetType: 'inline'
           script: 'go test'
-          workingDirectory: '$(System.DefaultWorkingDirectory)/Env-Infra/terratest/'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/Env-Infra/terratest/test/'
       
       - task: TerraformTask@5
         displayName: Terraform | Init (For Plan)
