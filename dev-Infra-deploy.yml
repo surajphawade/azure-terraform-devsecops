@@ -115,6 +115,10 @@ stages:
           script: |
             go get github.com/gruntwork-io/terratest/modules/terraform
             
+            go get github.com/gruntwork-io/terratest@latest
+            
+            go mod tidy
+            
             go test
           workingDirectory: '$(System.DefaultWorkingDirectory)/Env-Infra/terratest/test/'
       
