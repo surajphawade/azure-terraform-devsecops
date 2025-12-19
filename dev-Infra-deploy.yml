@@ -109,7 +109,7 @@ stages:
         inputs:
           targetType: 'inline'
           script: 'go test'
-          workingDirectory: '$(WORK_DIR)/Env-Infra/terratest/'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/Env-Infra/terratest/'
       
       - task: TerraformTask@5
         displayName: Terraform | Init (For Plan)
